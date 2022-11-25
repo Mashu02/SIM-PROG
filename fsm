@@ -1,0 +1,238 @@
+import enum
+import collections
+
+# vraag_hoeveel functie om te vragen hoeveel van elk product toe te voegen.
+def vraag_hoeveel(msg):
+    while True:
+        answer = input(msg + "\n")
+        try:
+            value = int(answer)
+            if value >= 0:
+                return value
+        except ValueError:
+            print(f"Dit antwoord is niet geldig: {answer}")
+
+# vraag_handeling is een functie om te vragen wat te doen.
+def vraag_handeling():
+    answers = ", ".join([action.value for action in Handeling])
+    while True:
+        answer = input(f"\nWat wilt u doen ({answers}):\nJe zit nu in de waiting state\n\n")
+        try:
+            return Handeling(answer)
+        except ValueError:
+            print(f"Dit antwoord is niet geldig: {answer}")
+
+# vraag_drink is een functie om te vragen voor welk drank die gene wilt. 
+def vraag_drink():
+    choices = {1: "Espresso", 2: "Cappuccino", 3: "Americano", 4: "Latte", 5: "Mocha", 6: "Decaf", 7: "Hot Chocolate", 8: "Hot Water", 9: "Terug naar menu"}
+    answers = ", ".join(f"{value} - {name}" for value, name in sorted(choices.items()))
+    while True:
+        answer = input(f"\nWat wilt u kopen? ({answers}):\n")
+        try:
+            value = int(answer)
+            if value >= 0 and value <=9:
+                return value
+            else:
+                print(f"{answer} is geen geldig nummer!")
+        except ValueError:
+            print(f"Dit antwoord is niet geldig: {answer}")
+
+# Een nieuwe tuple class genaamd Gebruik.
+# Zodat ik de items kan accessen met de naan in plaats van de index.
+Gebruik = collections.namedtuple("Gebruik", "water, milk, beans, choc, cups, price")
+
+# Class voor de verschillende antwoorden die gegeven kunnen worden in de vraag functies.
+# Hiermee kan ik oneindig lang loopen totdat je een geldig antwoord krijgt.
+class Handeling(enum.Enum):
+    BUY = "buy"
+    FILL = "fill"
+    REMAINING = "remaining"
+    EXIT = "exit"
+
+# Class buyer, heeft een naam met een gegeven hoeveelheid geld. 
+# Deze class koopt verschillende items in de koffie machine met zijn geld.
+class Buyer():
+    def __init__(self, name, money):
+        self.name = name 
+        self.money = money
+
+    def get_money(self):
+        return self.money
+
+# In de class KoffieMachine word alles bijelkaar gezet. 
+class KoffieMachine:
+    def __init__(self, water, milk, beans, choc, cups, buyer, running):
+        self.water = water
+        self.milk = milk
+        self.beans = beans
+        self.choc = choc
+        self.cups = cups
+        self.buyer = buyer
+        self.running = running
+
+        #FSM opzetten
+        self.FSM = FSM()
+        self.FSM.add_state("wacht")
+        self.FSM.add_state("buy")
+        self.FSM.add_state("wat")
+        self.FSM.add_state("remaining")
+        self.FSM.add_state("fill")
+        self.FSM.add_state("hoeveel")
+        self.FSM.add_state("exit")
+
+        self.FSM.set_alfabet(['1','2','3','4','6','7','8','9','buy','fill','remaining','exit','None','!<int>', '<string>','<int> >=0','<int> >=10'])
+
+        self.FSM.set_start(["waiting"])
+        self.FSM.set_end(["exit"])
+
+        self.FSM.add_delta("waiting", "exit", "exit")
+
+        self.FSM.add_delta("waiting", "buy", "buy")
+        self.FSM.add_delta("buy", "9", "waiting")
+        self.FSM.add_delta("buy", "<int> >=10", "buy")
+        self.FSM.add_delta("buy", "<string>", "buy")
+        self.FSM.add_delta("buy", "1,2,3,4,5,6,7,8", "wat")
+        self.FSM.add_delta("wat", "None", "waiting")
+
+        self.FSM.add_delta("waiting", "remaining", "remaining")
+        self.FSM.add_delta("remaining", "None", "waiting")
+
+        self.FSM.add_delta("waiting", "fill", "fill")
+        self.FSM.add_delta("fill", "!<int>", "fill")
+        self.FSM.add_delta("fill", "<int> >=0", "hoeveel")
+        self.FSM.add_delta("hoeveel", "None", "waiting")      
+
+    # doe_handeling is een functie waar die eigenlijk in de main menu zit. 
+    # Hier word met een gegeven handeling een andere functie aangeroepen. 
+    # Daarnaast veranderd het ook nog in welke state de FSM zit.
+    def doe_handeling(self, handeling):
+        if handeling == Handeling.BUY:
+            self.FSM.current_state = "buy"
+            print("je zit nu in de " + self.FSM.current_state + " state")
+            self.buy()
+        elif handeling == Handeling.FILL:
+            self.FSM.current_state = "fill"
+            print("je zit nu in de " + self.FSM.current_state + " state")
+            self.fill()
+        elif handeling == Handeling.EXIT:
+            self.running = False
+        elif handeling == Handeling.REMAINING:
+            self.FSM.current_state = "remaining"
+            print("je zit nu in de " + self.FSM.current_state + " state")
+            self.show_remaining()
+        else:
+            raise NotImplementedError(handeling)
+
+
+    # check is een functie om te kijken of de item wel gemaakt kan worden. 
+    # Dit doet die door te kijken naar de attributen of ze onder de 0 komen.
+    def check(self, gebruik):
+        if self.water - gebruik.water < 0:
+           print("Niet genoeg water")
+        elif self.milk - gebruik.milk < 0:
+            print("Niet genoeg melk")
+        elif self.beans - gebruik.beans < 0:
+            print("Niet genoeg koffiebonen")
+        elif self.choc - gebruik.choc < 0:
+            print("Niet genoeg choc")
+        elif self.cups - gebruik.cups < 0:
+            print("Niet genoeg bekers")
+        elif self.buyer.get_money() - gebruik.price < 0:
+            print("Niet genoeg saldo")
+        else: 
+            return True
+
+    # buy is een functie waar je een item kunt kopen.
+    # Wanneer iets ook word gekocht word de stock aangepast.
+    def buy(self):
+        choices = {1: "Espresso", 2: "Cappuccino", 3: "Americano", 4: "Latte", 5: "Mocha", 6: "Decaf", 7: "Hot Chocolate", 8: "Hot Water", 9: "Terug naar menu"}
+        drink = vraag_drink()
+        # Optie 9 is terug naar main menu
+        if drink == 9:
+            return
+        
+        # De "ingredienten" van de verschillende items.
+        espresso_geb = Gebruik(water=200, milk=100, beans=12, choc = 0, cups=1, price=2.5)
+        cappuccino_geb = Gebruik(water=200, milk=50, beans=15, choc = 0, cups=1, price=2)
+        americano_geb = Gebruik(water=200, milk=100, beans=8, choc = 0, cups=1, price=2)
+        latte_geb = Gebruik(water=200, milk=100, beans=12, choc = 0, cups=1, price=3)
+        mocha_geb = Gebruik(water=200, milk=100, beans=4, choc = 5, cups=1, price=3)
+        decaf_geb = Gebruik(water=200, milk=50, beans=5, choc = 0, cups=1, price=4)
+        hot_choco_geb = Gebruik(water=0, milk=200, beans=0, choc = 10, cups=1, price=1)
+        hot_water_geb = Gebruik(water=200, milk=0, beans=0, choc = 0, cups=1, price=1)
+
+        # Kijken voor welke drank die gene heeft gekozen. 
+        gebruik = {1: espresso_geb, 2: cappuccino_geb, 3: americano_geb, 4: latte_geb,
+                       5: mocha_geb, 6: decaf_geb, 7: hot_choco_geb, 8: hot_water_geb}[drink]
+        
+        if self.check(gebruik) == True:
+            print( "\nUw " + choices[drink] + " wordt voorbereid!")
+            # Geld gaat van de buyer af. 
+            self.buyer.money -= gebruik.price
+            print(f"U heeft nog {self.buyer.get_money()} euro")
+            # De stock van de machine word veranderd. 
+            self.water -= gebruik.water
+            self.milk -= gebruik.milk
+            self.beans -= gebruik.beans
+            self.cups -= gebruik.cups
+    
+    # fill is een funtie om de stock van de machine aan te vullen. 
+    def fill(self):
+        self.water += vraag_hoeveel("Schrijf op hoeveel ml water je wilt toevoegen:")
+        self.milk += vraag_hoeveel("Schrijf op hoeveel ml melk je wilt toevoegen:")
+        self.beans += vraag_hoeveel("Schrijf op hoeveel gram koffiebonen je wilt toevoegen:")
+        self.choc += vraag_hoeveel("Schrijf op hoeveel gram choc je wilt toevoegen:")
+        self.cups += vraag_hoeveel("Schrijf op hoeveel bekers u wilt toevoegen:")
+
+    # show_remaining is een functie om te kijken hoeveel stock de machine nog over heeft. 
+    def show_remaining(self):
+        print(f"\nDe machine heeft:")
+        print(f"{self.water} ml water")
+        print(f"{self.milk} ml melk")
+        print(f"{self.beans} gram koffiebonen")
+        print(f"{self.choc} gram choc")
+        print(f"{self.cups} bekers")
+
+# Class om een FSM aan te kunnen maken. 
+class FSM():
+    def __init__(self):
+        self.states = []
+        self.alfabet = []
+        self.start_states = []
+        self.end_states = []
+        self.deltas = []
+        self.current_state = ""
+
+    def get_current_state(self):
+        return self.current_state
+
+    def get_start_states(self):
+        return self.start_states
+
+    def add_delta(self, a,b,c):
+        self.deltas.append((a,b,c))
+
+    def set_start(self, names):
+        self.start_states = names
+
+    def set_end(self,names):
+        self.end_states = names
+
+    def add_state(self, name):
+        self.states.append(name)
+
+    def set_alfabet(self, alfabet):
+        self.alfabet = alfabet
+        
+
+def main():
+    # Een buyer aanmaken met naam een hoeveel geld hij heeft. 
+    test_buyer = Buyer("Lray", 20)
+    # Een machine aanmaken met een hoeveelheid stock en buyer. 
+    machine = KoffieMachine(3500,1000,1000,1000,150,test_buyer,True)
+    while machine.running:
+        handeling = vraag_handeling()
+        machine.doe_handeling(handeling)
+
+if __name__ == '__main__':
+    main()

@@ -38,7 +38,7 @@ def vraag_drink():
             print(f"Dit antwoord is niet geldig: {answer}")
 
 # Een nieuwe tuple class genaamd Gebruik.
-# Zodat ik de items kan accessen met de naan in plaats van de index.
+# Zodat ik de items kan accessen met de naam in plaats van de index.
 Gebruik = collections.namedtuple("Gebruik", "water, milk, beans, choc, cups, price")
 
 # Class voor de verschillende antwoorden die gegeven kunnen worden in de vraag functies.
@@ -80,7 +80,7 @@ class KoffieMachine:
         self.FSM.add_state("hoeveel")
         self.FSM.add_state("exit")
 
-        self.FSM.set_alfabet(['1','2','3','4','6','7','8','9','buy','fill','remaining','exit','None','!<int>', '<string>','<int> >=0','<int> >=10'])
+        self.FSM.set_alfabet([1,2,3,4,5,6,7,8,9,'buy','fill','remaining','exit','None','!<int>', '<string>','<int> >=0','<int> >=10'])
 
         self.FSM.set_start(["waiting"])
         self.FSM.set_end(["exit"])

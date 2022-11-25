@@ -176,7 +176,7 @@ class KoffieMachine:
             self.beans -= gebruik.beans
             self.cups -= gebruik.cups
     
-    # fill is een funtie om de stock van de machine aan te vullen. 
+    # Fill is een funtie om de stock van de machine aan te vullen. 
     def fill(self):
         self.water += vraag_hoeveel("Schrijf op hoeveel ml water je wilt toevoegen:")
         self.milk += vraag_hoeveel("Schrijf op hoeveel ml melk je wilt toevoegen:")
@@ -229,7 +229,7 @@ def main():
     # Een buyer aanmaken met naam een hoeveel geld hij heeft. 
     test_buyer = Buyer("Lray", 20)
     # Een machine aanmaken met een hoeveelheid stock en buyer. 
-    machine = KoffieMachine(400,1000,1000,1000,150,test_buyer,True)
+    machine = KoffieMachine(1000,1000,1000,1000,150,test_buyer,True)
     while machine.running:
         handeling = vraag_handeling()
         machine.doe_handeling(handeling)

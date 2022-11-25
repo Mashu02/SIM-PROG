@@ -229,7 +229,7 @@ def main():
     # Een buyer aanmaken met naam een hoeveel geld hij heeft. 
     test_buyer = Buyer("Lray", 20)
     # Een machine aanmaken met een hoeveelheid stock en buyer. 
-    machine = KoffieMachine(3500,1000,1000,1000,150,test_buyer,True)
+    machine = KoffieMachine(400,1000,1000,1000,150,test_buyer,True)
     while machine.running:
         handeling = vraag_handeling()
         machine.doe_handeling(handeling)
